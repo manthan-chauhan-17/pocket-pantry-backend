@@ -10,7 +10,7 @@ connectDB()
     app.listen(port, () => {
       console.log(`Server is running on http://localhost:${port}`);
     });
-    console.log("Connected to MongoDB");
+    console.log("✅ Connected to MongoDB");
   })
   .catch((error) => {
     console.error("Error connecting to MongoDB:", error.message);
