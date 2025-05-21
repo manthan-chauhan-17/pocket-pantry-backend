@@ -34,6 +34,10 @@ const itemSchema = new mongoose.Schema({
     ref: "User", // reference to User model
     required: true,
   },
+  // image : {
+  //   type : String,
+  //   require : true,
+  // }
 });
 
 const Item = mongoose.model("Items", itemSchema);
