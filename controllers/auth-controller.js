@@ -7,52 +7,57 @@ import env from "dotenv";
 env.config();
 
 const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  try {
+    const { name, email, password } = req.body;
 
-  // All fields are required
-  if (!name || !email || !password) {
-    return res.status(400).json(new ApiError(400, "All fields are required"));
-  }
+    // All fields are required
+    if (!name || !email || !password) {
+      return res.status(400).json(new ApiError(400, "All fields are required"));
+    }
 
-  // Finding if user exists
-  const existingUser = await User.findOne({ email: email });
+    // Finding if user exists
+    const existingUser = await User.findOne({ email: email });
 
-  if (existingUser) {
-    return res.status(400).json(new ApiError(400, "User Already Exists"));
-  }
+    if (existingUser) {
+      return res.status(400).json(new ApiError(400, "User Already Exists"));
+    }
 
-  // Hashing password
-  const hashedPassword = await bcrypt.hash(password, 10);
+    // Hashing password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  //   Storing in DB
-  const user = await User.insertOne({
-    name: name,
-    email: email,
-    password: hashedPassword,
-  });
+    //   Storing in DB
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
 
-  //   Generating JWt Token
-  const token = jwt.sign(
-    {
-      id: user._id.toString(),
-      email: email,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE_TIME }
-  );
-
-  return res.status(201).json(
-    new ApiResponse(
-      201,
+    //   Generating JWt Token
+    const token = jwt.sign(
       {
         id: user._id.toString(),
-        name: name,
         email: email,
-        token: token,
       },
-      "User Created Successfully"
-    )
-  );
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE_TIME }
+    );
+
+    return res.status(201).json(
+      new ApiResponse(
+        201,
+        {
+          id: user._id.toString(),
+          name: name,
+          email: email,
+          token: token,
+        },
+        "User Created Successfully"
+      )
+    );
+  } catch (error) {
+    console.error("[Register Error]", error);
+    return res.status(500).json(new ApiError(500, "Internal Server Error"));
+  }
 };
 
 const loginUser = async (req, res) => {
