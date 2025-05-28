@@ -24,6 +24,9 @@ const addItem = async (req, res) => {
     }
   }
 
+  // console.log("Image URL:", imageUrl);
+  
+
   // Inserting to DB
   const item = await Item.insertOne({
     itemName,
@@ -33,6 +36,8 @@ const addItem = async (req, res) => {
     image : imageUrl,
     user: userId,
   });
+
+  // console.log("Item added to DB:", item);
 
   return res.status(200).json(
     new ApiResponse(
@@ -56,7 +61,8 @@ const getItems = async (req, res) => {
 
   // finding items from db
   const items = await Item.find({ user: userId });
-
+  // console.log(items);
+  
   return res
     .status(200)
     .json(new ApiResponse(200, items, "Items Fetched Successfully"));
