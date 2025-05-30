@@ -21,7 +21,7 @@ const itemSchema = new mongoose.Schema({
     type: String,
   },
   expireDate: {
-    type: Date,
+    type: String,
     require: true,
   },
   category: {
