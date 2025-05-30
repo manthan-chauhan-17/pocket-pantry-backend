@@ -1,3 +1,4 @@
+import moment from "moment";
 import Item from "../models/item-model.js";
 import { ApiError } from "../utils/api-error.js";
 import { ApiResponse } from "../utils/api-response.js";
@@ -12,7 +13,9 @@ const addItem = async (req, res) => {
   if (!itemName || !expireDate || !category) {
     return res.status(400).json(new ApiError(400, "Add Required fields"));
   }
-
+  let formattedExpireDate = moment(expireDate).format("DD:MM:YYYY");
+  console.log(formattedExpireDate);
+  
   let imageUrl = null;
 
   if (req.file) {
@@ -31,7 +34,7 @@ const addItem = async (req, res) => {
   const item = await Item.insertOne({
     itemName,
     itemDescription,
-    expireDate,
+    expireDate : formattedExpireDate,
     category,
     image : imageUrl,
     user: userId,
