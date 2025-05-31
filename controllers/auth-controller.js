@@ -32,16 +32,6 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
     });
 
-    //   Generating JWt Token
-    const token = jwt.sign(
-      {
-        id: user._id.toString(),
-        email: email,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE_TIME }
-    );
-
     return res.status(201).json(
       new ApiResponse(
         201,
@@ -49,7 +39,6 @@ const registerUser = async (req, res) => {
           id: user._id.toString(),
           name: name,
           email: email,
-          token: token,
         },
         "User Created Successfully"
       )
@@ -88,8 +77,7 @@ const loginUser = async (req, res) => {
       id: user._id.toString(),
       email: email,
     },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE_TIME }
+    process.env.JWT_SECRET
   );
 
   return res.status(200).json(
@@ -106,14 +94,14 @@ const loginUser = async (req, res) => {
   );
 };
 
-const changePassword = async (req,res) => {
-  const {oldPassword , newPassword } = req.body;
+const changePassword = async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
   // From jwt
   const userEmail = req.user.email;
 
   // finding user from db
   const user = await User.findOne({ email: userEmail });
-  
+
   // checking for missing fields
   if (!oldPassword || !newPassword) {
     return res.status(400).json(new ApiError(400, "All Field are required"));
@@ -121,33 +109,43 @@ const changePassword = async (req,res) => {
 
   // comparison of old and new password
   if (oldPassword === newPassword) {
-    return res.status(400).json(new ApiError(400 , "New password can not be same as old password"));
+    return res
+      .status(400)
+      .json(new ApiError(400, "New password can not be same as old password"));
   }
 
   // token validation
   if (!userEmail) {
-    return res.status(400).json(new ApiError(400 , "Invalid Token"));
+    return res.status(400).json(new ApiError(400, "Invalid Token"));
   }
-  
-  // user exists or not 
+
+  // user exists or not
   if (!user) {
-    return res.status(404).json(new ApiError(404 , "No user found"));
+    return res.status(404).json(new ApiError(404, "No user found"));
   }
-  
-  // old password is valid or not 
+
+  // old password is valid or not
   let isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
 
   if (!isOldPasswordValid) {
-    return res.status(401).json(new ApiError(401 , "Your old password is wrong"));
+    return res
+      .status(401)
+      .json(new ApiError(401, "Your old password is wrong"));
   }
 
   // hasing new password
-  const hashedNewPassword = await bcrypt.hash(newPassword , 10);
+  const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
   // changing password in db
-  const passwordChange = await User.findByIdAndUpdate(user.id , {password : hashedNewPassword} , { new: true } );
+  const passwordChange = await User.findByIdAndUpdate(
+    user.id,
+    { password: hashedNewPassword },
+    { new: true }
+  );
 
-  return res.status(200).json(new ApiResponse(200 , "" , "Password changed successfully" ));
-}
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "", "Password changed successfully"));
+};
 
-export { registerUser, loginUser , changePassword};
+export { registerUser, loginUser, changePassword };
