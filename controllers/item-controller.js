@@ -2,7 +2,10 @@ import moment from "moment";
 import Item from "../models/item-model.js";
 import { ApiError } from "../utils/api-error.js";
 import { ApiResponse } from "../utils/api-response.js";
-import { uploadOnCloudinary } from "../utils/cloudinary-service.js";
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/cloudinary-service.js";
 
 const addItem = async (req, res) => {
   const { itemName, itemDescription, expireDate, category } = req.body;
@@ -17,11 +20,15 @@ const addItem = async (req, res) => {
   console.log(formattedExpireDate);
 
   let imageUrl = null;
+  let publicId = null;
 
   if (req.file) {
     const cloudinaryResult = await uploadOnCloudinary(req.file.path);
     if (cloudinaryResult && cloudinaryResult.url) {
       imageUrl = cloudinaryResult.url;
+      console.log(imageUrl);
+      publicId = cloudinaryResult.public_id;
+      console.log(publicId);
     } else {
       return res.status(400).json(new ApiError(400, "Image upload failed"));
     }
@@ -35,7 +42,7 @@ const addItem = async (req, res) => {
     itemDescription,
     expireDate: formattedExpireDate,
     category,
-    image: imageUrl,
+    image: { url: imageUrl, publicId },
     user: userId,
   });
 
@@ -45,12 +52,14 @@ const addItem = async (req, res) => {
     new ApiResponse(
       200,
       {
-        id: item._id.toString(),
-        itemName,
-        itemDescription,
-        expireDate,
-        category,
-        user: userId,
+        item: {
+          id: item._id.toString(),
+          itemName,
+          itemDescription,
+          expireDate,
+          category,
+          user: userId,
+        },
       },
       "Item Added Successfully"
     )
@@ -67,7 +76,7 @@ const getItems = async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, items, "Items Fetched Successfully"));
+    .json(new ApiResponse(200, { item: items }, "Items Fetched Successfully"));
 };
 
 const updateItem = async (req, res) => {
@@ -107,7 +116,9 @@ const updateItem = async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, updatedItem, "Item Updated Successfully"));
+    .json(
+      new ApiResponse(200, { item: updatedItem }, "Item Updated Successfully")
+    );
 };
 
 const deleteItem = async (req, res) => {
@@ -123,6 +134,16 @@ const deleteItem = async (req, res) => {
     return res.status(403).json(new ApiError(403, "Unauthorized request"));
   }
 
+  const itemTobeDeleted = await Item.findById(itemId);
+
+  console.log("PUBLIC ID :", itemTobeDeleted.image.publicId);
+
+  const cloudinaryResult = await deleteFromCloudinary(
+    itemTobeDeleted.image.publicId
+  );
+
+  console.log("cloud result ::", cloudinaryResult);
+
   const deletedItem = await Item.findByIdAndDelete({
     _id: itemId,
     user: userId,
@@ -134,7 +155,7 @@ const deleteItem = async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Item deleted successfully"));
+    .json(new ApiResponse(200, "", "Item deleted successfully"));
 };
 
 export { addItem, getItems, updateItem, deleteItem };
