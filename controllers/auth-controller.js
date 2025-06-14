@@ -36,9 +36,11 @@ const registerUser = async (req, res) => {
       new ApiResponse(
         201,
         {
-          id: user._id.toString(),
-          name: name,
-          email: email,
+          user: {
+            id: user._id.toString(),
+            name: name,
+            email: email,
+          },
         },
         "User Created Successfully"
       )
@@ -84,10 +86,7 @@ const loginUser = async (req, res) => {
     new ApiResponse(
       200,
       {
-        id: user._id.toString(),
-        name: user.name,
-        email,
-        token,
+        user: { id: user._id.toString(), name: user.name, email, token },
       },
       "Login Successful"
     )
