@@ -58,7 +58,7 @@ const addItem = async (req, res) => {
           itemDescription,
           expireDate,
           category,
-          user: userId,
+          image: { url: imageUrl, publicId },
         },
       },
       "Item Added Successfully"
@@ -71,12 +71,19 @@ const getItems = async (req, res) => {
   const userId = req.user.id;
 
   // finding items from db
-  const items = await Item.find({ user: userId });
-  // console.log(items);
+  const itemsFromDB = await Item.find({ user: userId }).select("-__v -user");
+
+  // Convert _id to id
+  const items = itemsFromDB.map((item) => {
+    const itemObj = item.toObject();
+    itemObj.id = itemObj._id;
+    delete itemObj._id;
+    return itemObj;
+  });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, { item: items }, "Items Fetched Successfully"));
+    .json(new ApiResponse(200, { items }, "Items Fetched Successfully"));
 };
 
 const updateItem = async (req, res) => {
