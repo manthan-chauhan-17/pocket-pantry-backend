@@ -1,6 +1,6 @@
 import { messaging } from "../middlewares/firebase.js";
-import Item from "./models/Item.js";
-import User from "./models/User.js";
+import Item from "../models/item-model.js";
+import User from "../models/user-model.js";
 import moment from "moment";
 
 class NotificationService {

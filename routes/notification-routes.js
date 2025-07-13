@@ -1,7 +1,7 @@
 import express from "express";
-import NotificationService from "../services/notificationService.js";
-import Item from "../models/Item.js";
-import User from "../models/User.js";
+import NotificationService from "../services/notification-service.js";
+import Item from "../models/item-model.js";
+import User from "../models/user-model.js";
 
 const notificationRouter = express.Router();
 
