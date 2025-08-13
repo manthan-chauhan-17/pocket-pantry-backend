@@ -186,6 +186,7 @@ class NotificationService {
           title,
           body,
         },
+        token: user.fcmToken,
         android: {
           clickAction: "FLUTTER_NOTIFICATION_CLICK",
           channelId: "general_channel",

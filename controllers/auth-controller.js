@@ -8,7 +8,7 @@ env.config();
 
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, fcmToken } = req.body;
 
     // All fields are required
     if (!name || !email || !password) {
@@ -30,6 +30,7 @@ const registerUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      fcmToken,
     });
 
     return res.status(201).json(
