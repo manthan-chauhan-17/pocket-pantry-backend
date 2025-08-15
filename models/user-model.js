@@ -15,26 +15,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    fcmToken: {
-      type: String, // Store FCM token for notifications
-      required: true,
-    },
-    notificationSettings: {
-      expirationNotifications: {
-        type: Boolean,
-        default: true,
+    fcmTokens: [
+      {
+        type: String, // Store FCM token for notifications
+        required: true,
       },
-      notificationDays: {
-        type: Number,
-        default: 2,
-        min: 1,
-        max: 3,
-      },
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+    ],
   },
   {
     timestamps: true,

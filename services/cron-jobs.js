@@ -1,40 +1,54 @@
 import cron from "node-cron";
-import NotificationService from "./notificationService.js";
+import Item from "../models/item-model.js";
+import NotificationService from "./notification-service.js";
 
-class CronJobs {
-  static initializeCronJobs() {
-    // Check for expiring items every day at 9 AM
-    cron.schedule("0 9 * * *", async () => {
-      console.log("Running expiration check cron job...");
-      try {
-        await NotificationService.checkExpiringItems();
-      } catch (error) {
-        console.error("Error in expiration check cron job:", error);
+// This function checks for expiring items and sends notifications
+async function checkExpiringItems() {
+  try {
+    console.log("Running expiry check...");
+
+    // Calculate date 3 days from now (you can adjust this)
+    const threeDayaFromNow = new Date();
+    threeDayaFromNow.setDate(threeDayaFromNow.getDate() + 3);
+
+    // Format date to match your item's expireDate format (assuming YYYY-MM-DD)
+    const expiryThreshold = threeDayaFromNow.toISOString().split("T")[0];
+
+    //  Find items expiring within the next 3 days
+    const expiringItems = await Item.find({
+      expireDate: { $lte: expiryThreshold },
+    }).populate("user", "fcmTokens");
+
+    // Group item by user
+    const itemByUser = expiringItems.reduce((acc, item) => {
+      if (!acc[item.user._id]) {
+        acc[item.user._id] = [];
       }
-    });
 
-    // Check for expiring items every 6 hours (more frequent checking)
-    cron.schedule("0 */6 * * *", async () => {
-      console.log("Running frequent expiration check...");
+      acc[item.user._id].push(item);
+      return acc;
+    }, {});
+
+    // Send notifications to each user with expiring items
+    for (const [userId, items] of Object.entries(itemByUser)) {
       try {
-        await NotificationService.checkExpiringItems();
+        await NotificationService.sendExpiryNotification(userId, items);
       } catch (error) {
-        console.error("Error in frequent expiration check:", error);
+        console.error(`Error notifying user ${userId}:`, error);
       }
-    });
+    }
 
-    // Mark expired items daily at midnight
-    cron.schedule("0 0 * * *", async () => {
-      console.log("Running expired items cleanup...");
-      try {
-        await NotificationService.markExpiredItems();
-      } catch (error) {
-        console.error("Error in expired items cleanup:", error);
-      }
-    });
-
-    console.log("Cron jobs initialized successfully");
+    console.log("Expiry check completed");
+  } catch (error) {
+    console.error("Error in expiry check:", error);
   }
 }
 
-export default CronJobs;
+export function startExpiryCronJob() {
+  cron.schedule("0 9 * * *", checkExpiringItems, {
+    schedule: true,
+    timezone: "Asia/Kolkata",
+  });
+
+  console.log("Expiry notification cron job started");
+}
