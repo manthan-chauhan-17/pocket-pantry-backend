@@ -1,87 +1,53 @@
-import Item from "../models/item-model.js";
 import NotificationService from "../services/notification-service.js";
 
-const sendExpirationCheck = async (req, res) => {
+/**
+ * Endpoint to register a device token for a user
+ * POST /api/notifications/register-token
+ * Body: { userId, token }
+ */
+const registerToken = async (req, res) => {
   try {
-    await NotificationService.checkExpiringItems();
-    res.json({
-      success: true,
-      message: "Expiration check completed successfully",
-    });
+    const { userId, token } = req.body;
+
+    if (!userId || !token) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "userId and token are required"));
+    }
+
+    await NotificationService.addUserToken(userId, token);
+
+    res.json({ success: true });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    console.error("Error registering token:", error);
+    res.status(500).json({ error: "Failed to register token" });
   }
 };
 
-const sendCustomNotification = async (req, res) => {
+/**
+ * Test endpoint to send a notification (for development)
+ * POST /api/notifications/test
+ * Body: { userId }
+ */
+
+const test = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { title, body, data } = req.body;
+    const { userId } = req.body;
 
     if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing JWT Token",
-      });
-    }
-    if (!title || !body) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing required fields: userId, title, body",
-      });
+      return res.status(400).json({ error: "userId is required" });
     }
 
-    const result = await NotificationService.sendCustomNotification(
-      userId,
-      title,
-      body,
-      data
-    );
-
-    res.json({
-      success: true,
-      message: "Custom Notification Sent Successfully",
-      messageId: result,
+    await NotificationService.sendToUser(userId, {
+      title: "Test Notification",
+      body: "This is a test notification from Pocket Pantry!",
     });
+
+    res.json({ success: true });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    console.error("Error sending test notification:", error);
+    res.status(500).json({ error: "Failed to send test notification" });
   }
 };
 
-const expiringItems = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { days = 3 } = req.query;
-
-    const today = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(today.getDate() + parseInt(days));
-
-    const expiringItems = await Item.find({
-      user: userId,
-      expireDate: {
-        $gte: today,
-        $lte: futureDate,
-      },
-      isExpired: false,
-    }).sort({ expireDate: 1 });
-
-    res.json({
-      success: true,
-      data: expiringItems,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-};
-
-export { sendExpirationCheck, sendCustomNotification, expiringItems };
+export { registerToken, test };
