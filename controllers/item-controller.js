@@ -16,8 +16,6 @@ const addItem = async (req, res) => {
   if (!itemName || !expireDate || !category) {
     return res.status(400).json(new ApiError(400, "Add Required fields"));
   }
-  let formattedExpireDate = moment(expireDate).format("DD:MM:YYYY");
-  console.log(formattedExpireDate);
 
   let imageUrl = null;
   let publicId = null;
@@ -26,9 +24,9 @@ const addItem = async (req, res) => {
     const cloudinaryResult = await uploadOnCloudinary(req.file.path);
     if (cloudinaryResult && cloudinaryResult.url) {
       imageUrl = cloudinaryResult.url;
-      console.log(imageUrl);
+      // console.log(imageUrl);
       publicId = cloudinaryResult.public_id;
-      console.log(publicId);
+      // console.log(publicId);
     } else {
       return res.status(400).json(new ApiError(400, "Image upload failed"));
     }
@@ -40,7 +38,7 @@ const addItem = async (req, res) => {
   const item = await Item.insertOne({
     itemName,
     itemDescription,
-    expireDate: formattedExpireDate,
+    expireDate,
     category,
     image: { url: imageUrl, publicId },
     user: userId,
