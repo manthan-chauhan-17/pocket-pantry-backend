@@ -5,6 +5,7 @@ import {
   deleteItem,
   getItems,
   updateItem,
+  getCategories,
 } from "../controllers/item-controller.js";
 import { upload } from "../middlewares/multer-middleware.js";
 import { messaging } from "../middlewares/firebase.js";
@@ -16,6 +17,7 @@ itemRouter.post("/add-item", upload.single("image"), verifyJwt, addItem);
 
 itemRouter.put("/update-item", verifyJwt, updateItem);
 itemRouter.delete("/delete-item", verifyJwt, deleteItem);
+itemRouter.get("/get-categories", getCategories);
 
 itemRouter.post("/send-single", async (req, res) => {
   try {
