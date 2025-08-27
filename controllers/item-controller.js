@@ -165,4 +165,29 @@ const deleteItem = async (req, res) => {
     .json(new ApiResponse(200, "", "Item deleted successfully"));
 };
 
-export { addItem, getItems, updateItem, deleteItem };
+const getCategories = async (req, res) => {
+  try {
+    return res.status(200).json({
+      cateogires: [
+        "Vegetables",
+        "Fruits",
+        "Dairy",
+        "Grains",
+        "Spices",
+        "Beverages",
+        "Snacks",
+        "Frozen",
+        "Others",
+      ],
+      status: 200,
+      message: "Categories",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: 500,
+      message: "Something went wrong",
+    });
+  }
+};
+
+export { addItem, getItems, updateItem, deleteItem, getCategories };

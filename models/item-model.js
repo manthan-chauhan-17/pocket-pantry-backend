@@ -22,7 +22,7 @@ const itemSchema = new mongoose.Schema(
       type: String,
     },
     expireDate: {
-      type: Date, // Changed from String to Date for better date operations
+      type: Date,
       required: true,
     },
     category: {
