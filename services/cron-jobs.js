@@ -1,30 +1,31 @@
 import cron from "node-cron";
 import Item from "../models/item-model.js";
 import NotificationService from "./notification-service.js";
+import { DateHelper } from "../utils/date-helper.js";
 
-// This function checks for expiring items and sends notifications
 async function checkExpiringItems() {
   try {
     console.log("Running expiry check...");
 
-    // Calculate date 3 days from now (you can adjust this)
-    const threeDayaFromNow = new Date();
-    threeDayaFromNow.setDate(threeDayaFromNow.getDate() + 3);
+    // Current timestamp
+    const now = DateHelper.now();
 
-    // Format date to match your item's expireDate format (assuming YYYY-MM-DD)
-    const expiryThreshold = threeDayaFromNow.toISOString().split("T")[0];
+    // Threshold: 3 days from now
+    const threeDaysFromNow = DateHelper.addDays(now, 3);
 
-    //  Find items expiring within the next 3 days
+    // Find items expiring within the next 3 days
     const expiringItems = await Item.find({
-      expireDate: { $lte: expiryThreshold },
+      expireDate: { $lte: threeDaysFromNow, $gte: now }, // expires between now and +3d
     }).populate("user", "fcmTokens");
 
-    // Group item by user
-    const itemByUser = expiringItems.reduce((acc, item) => {
-      if (!acc[item.user._id]) {
-        acc[item.user._id] = [];
-      }
+    if (expiringItems.length === 0) {
+      console.log("No items expiring in the next 3 days");
+      return;
+    }
 
+    // Group items by user
+    const itemByUser = expiringItems.reduce((acc, item) => {
+      if (!acc[item.user._id]) acc[item.user._id] = [];
       acc[item.user._id].push(item);
       return acc;
     }, {});
@@ -33,12 +34,19 @@ async function checkExpiringItems() {
     for (const [userId, items] of Object.entries(itemByUser)) {
       try {
         await NotificationService.sendExpiryNotification(userId, items);
+
+        console.log(
+          `User ${userId} notified for items expiring:`,
+          items.map((i) =>
+            DateHelper.format(i.expireDate, "DD MMM YYYY, hh:mm A")
+          )
+        );
       } catch (error) {
         console.error(`Error notifying user ${userId}:`, error);
       }
     }
 
-    console.log("Expiry check completed");
+    console.log("Expiry check completed ✅");
   } catch (error) {
     console.error("Error in expiry check:", error);
   }
