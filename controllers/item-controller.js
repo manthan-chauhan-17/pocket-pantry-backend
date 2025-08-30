@@ -188,4 +188,35 @@ const getCategories = async (req, res) => {
   }
 };
 
-export { addItem, getItems, updateItem, deleteItem, getCategories };
+const getSingleItem = async (req, res) => {
+  const { itemId } = req.body;
+
+  if (!itemId) {
+    return res.status(400).json(new ApiError(400, "Item id is required"));
+  }
+
+  const itemFromDB = await Item.findById(itemId).select("-__v -user");
+
+  if (!itemFromDB) {
+    return res.status(404).json(new ApiError(404, "Item not found"));
+  }
+
+  // Convert _id to id
+  const itemObj = itemFromDB.toObject();
+  itemObj.id = itemObj._id;
+  delete itemObj._id;
+  const item = itemObj;
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { item }, "Item Fetched Successfully"));
+};
+
+export {
+  addItem,
+  getItems,
+  updateItem,
+  deleteItem,
+  getCategories,
+  getSingleItem,
+};
