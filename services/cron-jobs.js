@@ -54,7 +54,7 @@ async function checkExpiringItems() {
 
 // will run every hour
 export function startExpiryCronJob() {
-  cron.schedule("0 * * * *", checkExpiringItems, {
+  cron.schedule("0 9 * * *", checkExpiringItems, {
     schedule: true,
     timezone: "Asia/Kolkata",
   });
