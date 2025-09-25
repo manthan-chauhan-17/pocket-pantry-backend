@@ -2,6 +2,7 @@ import cron from "node-cron";
 import Item from "../models/item-model.js";
 import NotificationService from "./notification-service.js";
 import { DateHelper } from "../utils/date-helper.js";
+import { deleteFromCloudinary } from "../utils/cloudinary-service.js";
 
 async function checkExpiringItems() {
   try {
