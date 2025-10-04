@@ -6,6 +6,7 @@ import itemRouter from "./routes/item-routes.js";
 import bodyParser from "body-parser";
 import notificationRouter from "./routes/notification-routes.js";
 import { startCronJobs } from "./services/cron-jobs.js";
+import recipeRouter from "./routes/recipe-routes.js";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/api/v1", healthcheckRouter); // Register the healthcheck route
 app.use("/api/v1/auth", authRouter); // Register the auth route
 app.use("/api/v1/item", itemRouter); // CRUD operation of item
 app.use("/api/v1/notification", notificationRouter); // Firebase notification
+app.use("/api/v1/recipe", recipeRouter);
 
 // Start cron job for expiry notification
 startCronJobs();
