@@ -9,23 +9,27 @@ const SPOONACULAR_API_KEY = process.env.SPOONACULAR_API_KEY;
 const getRecipesFromSpoonacular = async (ingredients) => {
   const ingredientsString = ingredients.join(",");
 
-  const url = "https://api.spoonacular.com/recipes/findByIngredients";
+  const url = "https://api.spoonacular.com/recipes/complexSearch";
 
   try {
     const response = await axios.get(url, {
       params: {
-        ingredients: ingredientsString,
+        includeIngredients: ingredientsString,
+        addRecipeInformation: true,
         number: 10,
         apiKey: SPOONACULAR_API_KEY,
-        ranking: 1,
-        ignorePantry: true,
+        fillIngredients: true,
+        sort: "max-used-ingredients",
       },
     });
 
-    const simplifiedRecipes = response.data.map((recipe) => ({
+    // console.log(response.data.results[0]);
+
+    const simplifiedRecipes = response.data.results.map((recipe) => ({
       id: recipe.id,
       title: recipe.title,
       image: recipe.image,
+      readyInMinutes: recipe.readyInMinutes,
       usedIngredientCount: recipe.usedIngredientCount,
       missedIngredientCount: recipe.missedIngredientCount,
     }));
