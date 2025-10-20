@@ -3,11 +3,17 @@ import {
   getRecipeDetailsFromSpoonacular,
 } from "../services/recipe-service.js";
 
+import Item from "../models/item-model.js";
+
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 
 const getRecipesByIngredients = async (req, res) => {
-  const { ingredients } = req.body; // e.g., ["apples", "flour", "sugar"]
+  const userId = req.user.id;
+
+  const itemsFromDB = await Item.find({ user: userId }).select("-__v -user");
+
+  const ingredients = itemsFromDB.map((item) => item.itemName);
 
   if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
     return res
