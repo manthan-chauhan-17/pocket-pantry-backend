@@ -6,6 +6,29 @@ dotenv.config();
 
 const SPOONACULAR_API_KEY = process.env.SPOONACULAR_API_KEY;
 
+/**
+ * Helper function to log Spoonacular API quota headers.
+ * @param {object} headers - The response headers object from axios.
+ */
+const _logSpoonacularQuota = (headers) => {
+  if (!headers) {
+    return; // No headers, nothing to log
+  }
+
+  // Axios lowercases all header keys
+  const quotaRequest = headers["x-api-quota-request"];
+  const quotaUsed = headers["x-api-quota-used"];
+  const quotaLeft = headers["x-api-quota-left"];
+
+  if (quotaRequest || quotaUsed || quotaLeft) {
+    console.log("Spoonacular API Quota:", {
+      request: quotaRequest,
+      used: quotaUsed,
+      left: quotaLeft,
+    });
+  }
+};
+
 const getRecipesFromSpoonacular = async (ingredients) => {
   const ingredientsString = ingredients.join(",");
 
@@ -23,7 +46,10 @@ const getRecipesFromSpoonacular = async (ingredients) => {
       },
     });
 
-    // console.log(response.data.results[0]);
+    // --- LOG HEADERS for Devlopment Environment ---
+    if (process.env.ENV == "dev ") {
+      _logSpoonacularQuota(response.headers);
+    }
 
     const simplifiedRecipes = response.data.results.map((recipe) => ({
       id: recipe.id,
