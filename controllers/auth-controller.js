@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { ApiError } from "../utils/api-error.js";
 import jwt from "jsonwebtoken";
 import env from "dotenv";
+import nodemailer from "nodemailer";
 env.config();
 
 const registerUser = async (req, res) => {
@@ -148,4 +149,45 @@ const changePassword = async (req, res) => {
     .json(new ApiResponse(200, "", "Password changed successfully"));
 };
 
-export { registerUser, loginUser, changePassword };
+const sendEmail = async(req,res) => {
+  const {email} = req.body;
+
+  if (!email) {
+    return res.status(400).json(new ApiError(400, "Email is required"));
+  }
+
+  const isEmailRegistered = await User.findOne({ email: email });
+
+  if (!isEmailRegistered) {
+    return res.status(400).json(new ApiError(400, "Email is not registered"));
+  }
+
+  const otp = Math.floor(Math.random() * 1000000);
+
+  let transport = nodemailer.createTransport({
+    service : "gmail",
+    auth : {
+      user : process.env.EMAIL,
+      pass : process.env.PASSWORD
+    }
+  });
+
+  const mailOptions = {
+    from: `"Pocket Pantry" <${process.env.EMAIL}>`,
+    to: email,
+    subject: "Pocket Pantry - Password Reset OTP",
+    text: `Your OTP for password reset is: ${otp} This OTP is valid for 10 minutes.`,
+  };
+
+  transport.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return res.status(400).json(new ApiError(400 , error.message));
+    } else {
+      return res.status(200).json(new ApiResponse(200 , info , "Email Sent Successfully"));
+    }
+  })
+}
+
+
+
+export { registerUser, loginUser, changePassword, sendEmail };

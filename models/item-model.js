@@ -45,6 +45,24 @@ const itemSchema = new mongoose.Schema(
         required: true,
       },
     },
+    quantity : {
+      value : { 
+        type : Number,
+        min : 0
+      },
+      unit :  {
+        type : String,
+      },
+    },
+    lowStockThreshold : {
+       value : { 
+        type : Number,
+        min : 0
+      },
+      unit :  {
+        type : String,
+      },
+    }
   },
   {
     timestamps: true, // Adds createdAt and updatedAt

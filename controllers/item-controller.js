@@ -6,14 +6,35 @@ import {
   deleteFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/cloudinary-service.js";
+import {
+  getExpirinSoonItems,
+  getLowStockItems,
+  getRecentlyAddedItems,
+} from "../services/item-service.js";
 
 const addItem = async (req, res) => {
-  const { itemName, itemDescription, expireDate, category } = req.body;
+  const {
+    itemName,
+    itemDescription,
+    expireDate,
+    category,
+    quantityValue,
+    quantityUnit,
+    lowStockThresholdValue,
+  } = req.body;
 
   //   userId from jwt token
   const userId = req.user.id;
 
-  if (!itemName || !expireDate || !category) {
+  // console.log(`Expire Date :  ${expireDate}`);
+
+  if (
+    !itemName ||
+    !expireDate ||
+    !category ||
+    !quantityValue ||
+    !quantityUnit
+  ) {
     return res.status(400).json(new ApiError(400, "Add Required fields"));
   }
 
@@ -42,22 +63,21 @@ const addItem = async (req, res) => {
     category,
     image: { url: imageUrl, publicId },
     user: userId,
+    quantity: {
+      value: quantityValue,
+      unit: quantityUnit,
+    },
+    lowStockThreshold: {
+      value: lowStockThresholdValue,
+      unit: quantityUnit,
+    },
   });
-
-  // console.log("Item added to DB:", item);
 
   return res.status(200).json(
     new ApiResponse(
       200,
       {
-        item: {
-          id: item._id.toString(),
-          itemName,
-          itemDescription,
-          expireDate,
-          category,
-          image: { url: imageUrl, publicId },
-        },
+        itemId:item._id.toString()
       },
       "Item Added Successfully"
     )
@@ -65,24 +85,64 @@ const addItem = async (req, res) => {
 };
 
 const getItems = async (req, res) => {
-  // From jwt
   const userId = req.user.id;
+  const { filter } = req.query;
 
-  // finding items from db
-  const itemsFromDB = await Item.find({ user: userId }).select("-__v -user");
+  // Fetch items
+  let itemsFromDB = await Item.find({ user: userId })
+    .select("-__v -user")
+    .sort({ createdAt: -1 }); // for "recently-added"
 
-  // Convert _id to id
+  // Apply filters 
+  switch (filter) {
+    case "expiring-soon":
+      itemsFromDB = getExpirinSoonItems(itemsFromDB);
+      break;
+
+    case "low-stock":
+      itemsFromDB = getLowStockItems(itemsFromDB);
+      break;
+
+    case "recently-added":
+      itemsFromDB = getRecentlyAddedItems(itemsFromDB);
+      break;
+
+    default:
+      // no filter → all items
+      break;
+  }
+
+  // 3. Map DB model → API contract
   const items = itemsFromDB.map((item) => {
     const itemObj = item.toObject();
-    itemObj.id = itemObj._id;
-    delete itemObj._id;
-    return itemObj;
+
+    return {
+      itemId: itemObj._id,
+      name: itemObj.itemName,
+      expireDate: itemObj.expireDate,
+      quantity: itemObj.quantity,
+      lowStockThreshold: itemObj.lowStockThreshold,
+      category: itemObj.category,
+      imageUrl: itemObj.image?.url ?? '',
+      createdAt: itemObj.createdAt,
+    };
   });
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, { items }, "Items Fetched Successfully"));
+  // 4. Send unified response
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        items,
+        meta: {
+          total: items.length,
+        },
+      },
+      "Items fetched successfully"
+    )
+  );
 };
+
 
 const updateItem = async (req, res) => {
   const { itemId, itemName, itemDescription, expireDate, category } = req.body;
